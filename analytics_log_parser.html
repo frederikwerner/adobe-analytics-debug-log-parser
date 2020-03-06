@@ -48,10 +48,10 @@
 						//console.log(value);
 						//Parse line from Textbox according to how Adobe Analytics Mobile SDK loglines look like. Continue on match
 						var arr = /.* Analytics - Request Queued \((?<Vars1>.*)(?<Context>&c\.&.*&\.c&)(?<Vars2>.*)\)/.exec(value);
-						console.log(arr);
+						//console.log(arr);
 						if(arr == null){
 							arr = /.* AnalyticsExtension hit queued \((?<Vars1>.*)(?<Context>&c\.&.*&\.c&)(?<Vars2>.*)\)/.exec(value);
-							console.log(arr);
+							//console.log(arr);
 						}
 						if(arr && arr != null){
 							//console.log(arr);
