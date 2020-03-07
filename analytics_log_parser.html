@@ -64,8 +64,8 @@
 							for (var i = 0; i < parts.length; i++) {
 								var part = parts[i].split('=');
 								if(part[1].length > 0){
-									window.query[lines][decodeURIComponent(part[0])] = decodeURIComponent(part[1] || '');
-									window.variables.push(decodeURIComponent(part[0]));
+									window.query[lines]["vars."+decodeURIComponent(part[0])] = decodeURIComponent(part[1] || '');
+									window.variables.push("vars."+decodeURIComponent(part[0]));
 								}
 							}
 							//Query Parameters after context variables
@@ -73,8 +73,8 @@
 							for (var i = 0; i < parts.length; i++) {
 								var part = parts[i].split('=');
 								if(part[1].length > 0){
-									window.query[lines][decodeURIComponent(part[0])] = decodeURIComponent(part[1] || '');
-									window.variables.push(decodeURIComponent(part[0]));
+									window.query[lines]["vars."+decodeURIComponent(part[0])] = decodeURIComponent(part[1] || '');
+									window.variables.push("vars."+decodeURIComponent(part[0]));
 								}
 							}
 							//Parse context variables for Adobe and custom variables
@@ -113,7 +113,7 @@
 								}
 							}
 							//Determine type of event by checking for "pe" parameter
-							if("pe" in window.query[lines]){
+							if("vars.pe" in window.query[lines]){
 								window.query[lines]["type"]="Link Tracking";
 							}
 							else{
@@ -146,7 +146,7 @@
 							header += '<th class="adobecontext">'+uniqueVars[index].replace(".",".<br>")+'</th>';
 						}
 						else{
-							header += '<th class="vars">'+uniqueVars[index]+'</th>';
+							header += '<th class="vars">'+uniqueVars[index].replace(".",".<br>")+'</th>';
 						}
 					}
 					header += '</tr>';
@@ -171,7 +171,7 @@
 								body += '<td title="'+el2+' on request '+(i+1)+' ('+el["type"]+')">'+(el.adobecontext[key]?el.adobecontext[key]:"")+'</td>';
 							}
 							else{
-								body += '<td title="'+el2+' on request '+(i+1)+' ('+el["type"]+')">'+(el[el2]?el[el2]:"")+'</td>';
+								body += '<td title="'+el2+' on request '+(i+1)+' ('+el["type"]+')">'+(el[el2]?el[el2]:"ass")+'</td>';
 							}
 						});	
 						body += '</tr>';
