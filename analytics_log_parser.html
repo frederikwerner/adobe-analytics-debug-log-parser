@@ -63,7 +63,7 @@
 							var parts = (arr.groups.Vars1).split('&');
 							for (var i = 0; i < parts.length; i++) {
 								var part = parts[i].split('=');
-								if(part[1].length > 0){
+								if(part[1] && part[1].length > 0){
 									window.query[lines]["vars."+decodeURIComponent(part[0])] = decodeURIComponent(part[1] || '');
 									window.variables.push("vars."+decodeURIComponent(part[0]));
 								}
@@ -72,7 +72,7 @@
 							var parts = (arr.groups.Vars2).split('&');
 							for (var i = 0; i < parts.length; i++) {
 								var part = parts[i].split('=');
-								if(part[1].length > 0){
+								if(part[1] && part[1].length > 0){
 									window.query[lines]["vars."+decodeURIComponent(part[0])] = decodeURIComponent(part[1] || '');
 									window.variables.push("vars."+decodeURIComponent(part[0]));
 								}
@@ -95,7 +95,7 @@
 								var parts = (arr2.groups.Context2).split('&');
 								for (var i = 0; i < parts.length; i++) {
 									var part = parts[i].split('=');
-									if(part[1].length > 0){
+									if(part[1] && part[1].length > 0){
 										window.query[lines].context[decodeURIComponent(part[0])] = decodeURIComponent(part[1] || '');
 										window.variables.push("context."+decodeURIComponent(part[0]));
 									}
@@ -106,7 +106,7 @@
 								var parts = (arr2.groups.AppContext).split('&');
 								for (var i = 0; i < parts.length; i++) {
 									var part = parts[i].split('=');
-									if(part[1].length > 0){
+									if(part[1] && part[1].length > 0){
 										window.query[lines].adobecontext[decodeURIComponent(part[0])] = decodeURIComponent(part[1] || '');
 										window.variables.push("adobecontext."+decodeURIComponent(part[0]));
 									}
