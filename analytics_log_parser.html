@@ -52,6 +52,10 @@
 						if(arr == null){
 							arr = /.* AnalyticsExtension hit queued \((?<Vars1>.*)(?<Context>&c\.&.*&\.c&)(?<Vars2>.*)\)/.exec(value);
 							//console.log(arr);
+							if(arr == null){
+								arr = /.* AnalyticsExtension - track - Track Request Queued \((?<Vars1>.*)(?<Context>&c\.&.*&\.c&)(?<Vars2>.*)\)/.exec(value);
+								//console.log(arr);
+							}
 						}
 						if(arr && arr != null){
 							//console.log(arr);
