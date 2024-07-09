@@ -37,7 +37,7 @@
 		</style>
 		<script>
 			//TODO: Performance Mode, Doku, Styling
-			function translate(){
+			function translate4(){
 				//Get content from Textbox and split it at newline, check if it has content afterwards
 				var content = $('#textinput').val().split(/\r?\n/);
 				//console.log(content);
@@ -253,13 +253,218 @@
 				window.query = null;
 				window.variables = null;
 			}
+
+			function translate5(){
+				//Get content from Textbox
+				var input = $('#textinput').val();
+				//console.log(content);
+const transformedLogData = transformLogData(input);
+//console.log(JSON.stringify(transformedLogData, null, 2));
+buildtable(transformedLogData);
+}
+
+function transformLogData(logData) {
+    const entries = logData.split(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/gm).slice(1);
+    const headers = logData.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}/gm);
+    const result = [];
+
+    entries.forEach((entry, index) => {
+        const lines = entry.trim().split('\n');
+        const jsonPart = lines.join('\n').replace(/(,)\s*([}\]])/g, '$2').replace(/\\/g, '');
+        const jsonData = parseData(jsonPart);
+
+        const transformedEntry = { Time: headers[index] };
+
+        // Set request type based on keys in the object
+        if (jsonData.action) {
+            transformedEntry['request type'] = 'Track Action';
+        } else if (jsonData.state) {
+            transformedEntry['request type'] = 'Track State';
+        } else {
+            transformedEntry['request type'] = 'unknown';
+        }
+
+        for (const key in jsonData) {
+            if (key !== 'data') {
+                transformedEntry[key] = jsonData[key];
+            } else {
+                for (const dataKey in jsonData.data) {
+                    if (dataKey !== 'contextdata') {
+                        transformedEntry[dataKey] = jsonData.data[dataKey];
+                    } else {
+                        for (const contextDataKey in jsonData.data.contextdata) {
+                            transformedEntry[`contextdata.${contextDataKey}`] = jsonData.data.contextdata[contextDataKey];
+                        }
+                    }
+                }
+            }
+        }
+        result.push(transformedEntry);
+    });
+    return result;
+}
+
+function parseData(data) {
+    const lines = data.trim().split('\n');
+    const parsed = {};
+    let currentContextDataKey = null;
+	
+    lines.forEach(line => {
+        const index = line.indexOf(':');
+        if (index !== -1) {
+            let key = line.substring(0, index).trim();
+            let value = line.substring(index + 1).trim();
+
+            // Entferne Komma und Klammern am Ende
+            value = value.replace(/,$/, '').replace(/[\{\}]/g, '').trim();
+
+            // Füge Anführungszeichen hinzu, wenn nicht vorhanden
+            if (!key.startsWith('"')) {
+                key = `"${key}"`;
+            }
+            if (!value.startsWith('"') && !value.endsWith('"') && isNaN(value) && value !== 'null' && value !== 'true' && value !== 'false') {
+                value = `"${value}"`;
+            }
+
+            // Entferne Anführungszeichen vom Key für weitere Verarbeitung
+            key = key.replace(/^"|"$/g, '');
+			
+            // Überprüfen, ob der Schlüssel im contextdata-Bereich ist und Präfix hinzufügen
+            if (currentContextDataKey) {
+				if (key == 'mask') {
+					currentContextDataKey = null;
+				} else {
+					key = `${currentContextDataKey}.${key}`;
+				}
+            }
+
+            // Aktualisiere den aktuellen contextdata-Bereich
+			if (key === 'contextdata') {
+                currentContextDataKey = key;
+            } else if (key === 'data') {
+            } else if (key === 'mask') {
+				parsed[key] = JSON.parse(value.replace(')', ''));
+            } else {
+                parsed[key] = JSON.parse(value);
+            }
+        }
+    });
+    return parsed;
+}
+
+
+function buildtable(transformedLogData){
+	// Liste der eindeutigen Keys erstellen
+	const uniqueKeys = [...new Set(transformedLogData.flatMap(Object.keys))].sort();
+	// Setze "request type" an die erste Stelle
+	const indexOfType = uniqueKeys.indexOf('request type');
+	if (indexOfType > -1) {
+		uniqueKeys.splice(indexOfType, 1);
+	}
+	uniqueKeys.unshift("request type");
+
+	// HTML-Tabelle erstellen
+	let body = "<thead><tr>";
+
+	// Tabellen-Header
+	uniqueKeys.forEach(key => {
+		body += `<th>${key.replace(/\./g, '.<br>')}</th>`;
+	});
+	body += "</tr></thead><tbody>";
+
+	// Tabellen-Daten
+	transformedLogData.forEach(entry => {
+		body += "<tr>";
+		uniqueKeys.forEach(key => {
+			body += `<td>${entry[key] !== undefined ? entry[key] : ''}</td>`;
+		});
+		body += "</tr>";
+	});
+
+	body += "</tbody>";
+	//Clear result div and build Datatable
+	$("#resultdiv").html("");
+	$("#resultdiv").append('<table id="resulttable" class="table table-striped table-bordered"></table>');
+	//Finally, append html to document and format as Datatable, with settings as defined
+	$("#resulttable").append(body);
+	$("#inputdiv").collapse("hide");
+	$("#resultdiv").collapse("show");
+	$('#resulttable').DataTable({
+		"paging":   false,
+		"aaSorting": [],
+		"ordering": true,
+		"info":     false,
+		"colReorder": true,
+		"fixedHeader": true,
+		"scrollY": '75vh',
+		"scrollX": true,
+		"select": true,
+		"dom": 'Bfrtip',
+		fixedColumns:   {
+			leftColumns: 2
+		},
+		colReorder: {
+			fixedColumnsLeft: 2
+		},
+		"buttons": [
+			{
+				"extend": 'collection',
+				"text": 'Export',
+				"buttons": [ 'copy', 'csv', 'excel', 'pdf', 'print']
+			},
+			{
+				"extend": 'collection',
+				"text": 'Column Visibility',
+				"buttons": [ 
+					{
+						extend: 'colvis',
+						text: 'Single Columns'
+					}, {
+						"extend": 'collection',
+						"text": 'Column Groups',
+						"buttons": [
+							{
+								extend: 'colvisGroup',
+								text: 'Hide Custom Context Variables',
+								hide: '.context'
+							},
+							{
+								extend: 'colvisGroup',
+								text: 'Hide Adobe Context Variables',
+								hide: '.adobecontext'
+							},
+							{
+								extend: 'colvisGroup',
+								text: 'Hide other Variables',
+								hide: '.vars'
+							}
+						]
+					},
+					'colvisRestore']
+			},					
+
+			
+			{
+				text: 'Start Over',
+				action: function ( e, dt, node, config ) {
+					$("#inputdiv").collapse("show");
+					$("#resultdiv").collapse("hide");
+				}
+			}
+		]
+	});
+
+}
+
 		</script>
 	</head>
 	<body style="text-align: center;">
 		<h1>Adobe Analytics SDK Debug Parser</h1>
 		<div id="inputdiv" style="margin: 0 auto; width: 75%; text-align: center;">
 			<textarea id="textinput" style="width: 100%; height: 50%" placeholder="Paste Analytics Debug Logs here!"></textarea><br><br>
-			<button onclick="window.translate()" class="btn btn-primary" style="margin: 0 auto;">Make it pretty</button><br><br>
+			<button onclick="window.translate4()" class="btn btn-primary" style="margin: 0 auto;">Make it pretty (SDK v4.x)</button>
+			<button onclick="window.translate5()" class="btn btn-primary" style="margin: 0 auto;">Make it pretty (SDK v5.x)</button>
+			<br><br>
 			Copy debug log lines from Android Studio or Xcode (filtered by "Analytics - Request Queued" for 4.x SDK or "AnalyticsExtension hit queued" for Launch extension) and paste them above!<br>
 			<a href="https://www.frederikwerner.de/blog/adobe-analytics/deciphering-adobe-analyticss-mobile-sdk-debug-output/">See here for usage examples.</a>
 		</div>
